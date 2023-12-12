@@ -19,6 +19,7 @@ package xdsresource
 import (
 	"fmt"
 
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/golang/protobuf/ptypes/any"
 	"google.golang.org/protobuf/proto"
 
@@ -46,6 +47,7 @@ func UnmarshalNDS(rawResources []*any.Any) (*NDSResource, error) {
 		res[k] = v.Ips
 	}
 
+	klog.Infof("receive nds. %v", res)
 	return &NDSResource{
 		NameTable: res,
 	}, nil
