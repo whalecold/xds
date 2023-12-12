@@ -424,7 +424,7 @@ func (c *xdsClient) handleLDS(resp *discoveryv3.DiscoveryResponse) error {
 	// we need to filter the response.
 	c.mu.RLock()
 	filteredRes := make(map[string]xdsresource.Resource)
-	klog.Infof("watch resource ... %v", c.watchedResource[xdsresource.ListenerType])
+	klog.Infof("watch resource ... %v  %v", c.watchedResource[xdsresource.ListenerType], res)
 	for n := range c.watchedResource[xdsresource.ListenerType] {
 		if c.ndsRequired() {
 			// TODO? why transfer it.
@@ -433,6 +433,7 @@ func (c *xdsClient) handleLDS(resp *discoveryv3.DiscoveryResponse) error {
 				klog.Warnf("KITEX: [XDS] get listener name %s failed, err: %v", n, err)
 				continue
 			}
+			klog.Infof("watch resource ... %v  %v ln name %s", c.watchedResource[xdsresource.ListenerType], res, ln)
 			if lis, ok := res[ln]; ok {
 				filteredRes[n] = lis
 			} else {
