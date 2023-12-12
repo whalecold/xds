@@ -418,6 +418,7 @@ func (c *xdsClient) handleLDS(resp *discoveryv3.DiscoveryResponse) error {
 	klog.Infof("watch resource ... %v", c.watchedResource[xdsresource.ListenerType])
 	for n := range c.watchedResource[xdsresource.ListenerType] {
 		if c.ndsRequired() {
+			// TODO? why transfer it.
 			ln, err := c.getListenerName(n)
 			if err != nil || ln == "" {
 				klog.Warnf("KITEX: [XDS] get listener name %s failed, err: %v", n, err)

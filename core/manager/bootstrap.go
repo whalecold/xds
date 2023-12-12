@@ -85,12 +85,11 @@ func newBootstrapConfig(config *XDSServerConfig) (*BootstrapConfig, error) {
 			Id: fmt.Sprintf("sidecar~%s~%s.%s~%s.%s", podIP, podName, namespace, namespace, nodeIDSuffix),
 			Metadata: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"ISTIO_VERSION":     structpbString(istioVersion),
-					"NAMESPACE":         structpbString(namespace),
-					"INSTANCE_IPS":      structpbString(podIP),
-					"DNS_CAPTURE":       structpbString("true"),
-					"DNS_AUTO_ALLOCATE": structpbString("true"),
-					"CLUSTER_ID":        structpbString(auth.GetClusterID()),
+					"ISTIO_VERSION": structpbString(istioVersion),
+					"NAMESPACE":     structpbString(namespace),
+					"INSTANCE_IPS":  structpbString(podIP),
+					"CLUSTER_ID":    structpbString(auth.GetClusterID()),
+					"MESH_ID":       structpbString("cluster.local"),
 					// TODO add more metadata.
 				},
 			},
