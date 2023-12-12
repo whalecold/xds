@@ -45,6 +45,11 @@ var (
 	jwtToken  string
 )
 
+// GetClusterID return clusterID
+func GetClusterID() string {
+	return clusterID
+}
+
 func init() {
 	// init clusterID
 	clusterID = os.Getenv(clusterIDEnvKey)

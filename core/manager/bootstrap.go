@@ -23,6 +23,7 @@ import (
 
 	v3core "github.com/envoyproxy/go-control-plane/envoy/config/core/v3"
 	structpb "github.com/golang/protobuf/ptypes/struct"
+	"github.com/kitex-contrib/xds/core/manager/auth"
 )
 
 const (
@@ -84,12 +85,22 @@ func newBootstrapConfig(config *XDSServerConfig) (*BootstrapConfig, error) {
 			Id: fmt.Sprintf("sidecar~%s~%s.%s~%s.%s", podIP, podName, namespace, namespace, nodeIDSuffix),
 			Metadata: &structpb.Struct{
 				Fields: map[string]*structpb.Value{
-					"ISTIO_VERSION": {
-						Kind: &structpb.Value_StringValue{StringValue: istioVersion},
-					},
+					"ISTIO_VERSION":     structpbString(istioVersion),
+					"NAMESPACE":         structpbString(namespace),
+					"INSTANCE_IPS":      structpbString(podIP),
+					"DNS_CAPTURE":       structpbString("true"),
+					"DNS_AUTO_ALLOCATE": structpbString("true"),
+					"CLUSTER_ID":        structpbString(auth.GetClusterID()),
+					// TODO add more metadata.
 				},
 			},
 		},
 		xdsSvrCfg: config,
 	}, nil
+}
+
+func structpbString(str string) *structpb.Value {
+	return &structpb.Value{
+		Kind: &structpb.Value_StringValue{StringValue: str},
+	}
 }
