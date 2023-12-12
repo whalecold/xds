@@ -388,11 +388,20 @@ func (c *xdsClient) sendRequest(req *discoveryv3.DiscoveryRequest) {
 // getListenerName returns the listener name in this format: ${clusterIP}_${port}
 // lookup the clusterIP using the cipResolver and return the listenerName
 func (c *xdsClient) getListenerName(rName string) (string, error) {
+	var (
+		addr string
+		port string
+	)
+
 	tmp := strings.Split(rName, ":")
-	if len(tmp) != 2 {
+	if len(tmp) == 2 {
+		addr, port = tmp[0], tmp[1]
+	} else if len(tmp) == 1 {
+		addr, port = tmp[0], "80"
+	} else {
 		return "", fmt.Errorf("invalid listener name: %s", rName)
 	}
-	addr, port := tmp[0], tmp[1]
+
 	cip, ok := c.cipResolver.lookupHost(addr)
 	if ok && len(cip) > 0 {
 		clusterIPPort := cip[0] + "_" + port
