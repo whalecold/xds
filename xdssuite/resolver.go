@@ -23,6 +23,7 @@ import (
 	"github.com/kitex-contrib/xds/core/xdsresource"
 
 	"github.com/cloudwego/kitex/pkg/discovery"
+	"github.com/cloudwego/kitex/pkg/klog"
 	"github.com/cloudwego/kitex/pkg/rpcinfo"
 )
 
@@ -92,6 +93,10 @@ func (r *XDSResolver) getEndpoints(ctx context.Context, desc string) ([]*xdsreso
 		return nil, fmt.Errorf("no endpoints for cluster: %s", desc)
 	}
 	// TODO: filter localities
+	for _, ep := range endpoints.Localities[0].Endpoints {
+		klog.Info("endpoints info ... %s", ep.Addr().String())
+		klog.Info("endpoints info ... %s", ep.Addr().Network())
+	}
 	return endpoints.Localities[0].Endpoints, nil
 }
 
