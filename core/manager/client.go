@@ -22,6 +22,7 @@ import (
 	"runtime/debug"
 	"strings"
 	"sync"
+	"time"
 
 	"github.com/cenkalti/backoff/v4"
 
@@ -106,7 +107,7 @@ type xdsClient struct {
 
 	// watchedResource is the map of resources that are watched by the client.
 	// every discovery request will contain all the resources of one type in the map.
-	watchedResource map[xdsresource.ResourceType]map[string]bool
+	watchedResource map[xdsresource.ResourceType]map[string]time.Time
 
 	// cipResolver is used to resolve the clusterIP, using NDS.
 	// listenerName (we use fqdn for listener name) to clusterIP.
@@ -139,7 +140,7 @@ func newXdsClient(bCfg *BootstrapConfig, ac ADSClient, updater *xdsResourceManag
 		config:          bCfg,
 		adsClient:       ac,
 		connectBackoff:  backoff.NewExponentialBackOff(),
-		watchedResource: make(map[xdsresource.ResourceType]map[string]bool),
+		watchedResource: make(map[xdsresource.ResourceType]map[string]time.Duration),
 		cipResolver:     newNdsResolver(),
 		versionMap:      make(map[xdsresource.ResourceType]string),
 		nonceMap:        make(map[xdsresource.ResourceType]string),
@@ -153,27 +154,35 @@ func newXdsClient(bCfg *BootstrapConfig, ac ADSClient, updater *xdsResourceManag
 }
 
 // Watch adds a resource to the watch map and send a discovery request.
-func (c *xdsClient) Watch(rType xdsresource.ResourceType, rName string, remove bool) {
+func (c *xdsClient) Watch(rType xdsresource.ResourceType, rName string, remove bool) time.Time {
 	c.mu.Lock()
 	defer c.mu.Unlock()
 	// New resource type
 	if r := c.watchedResource[rType]; r == nil {
-		c.watchedResource[rType] = make(map[string]bool)
+		c.watchedResource[rType] = make(map[string]time.Time)
+	}
+	timestamp, ok := c.watchedResource[rType][rName]
+	// if there is no changed for the watchedResource, does not send request again as the
+	// istiod may regard the same subscribed resources as an ack message.
+	if remove && !ok || !remove && ok {
+		return timestamp
 	}
 	// subscribe new resource
+	now := time.Now()
 	if remove {
 		delete(c.watchedResource[rType], rName)
 	} else {
-		c.watchedResource[rType][rName] = true
+		c.watchedResource[rType][rName] = now
 	}
 	// prepare resource name
 	req := c.prepareRequest(rType, c.versionMap[rType], c.nonceMap[rType], c.watchedResource[rType])
 	// send request for this resource
 	c.sendRequest(req)
+	return now
 }
 
 // prepareRequest prepares a new request for the specified resource type with input version and nonce
-func (c *xdsClient) prepareRequest(rType xdsresource.ResourceType, version, nonce string, res map[string]bool) *discoveryv3.DiscoveryRequest {
+func (c *xdsClient) prepareRequest(rType xdsresource.ResourceType, version, nonce string, res map[string]time.Time) *discoveryv3.DiscoveryRequest {
 	rNames := make([]string, 0, len(res))
 	for name := range res {
 		rNames = append(rNames, name)

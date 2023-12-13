@@ -138,10 +138,15 @@ func (m *xdsResourceManager) Get(ctx context.Context, rType xdsresource.Resource
 	}
 	nf, ok := m.notifierMap[rType][rName]
 	if !ok {
+		t := m.client.Watch(rType, rName, false)
+		if time.Since(t) > defaultXDSFetchTimeout {
+			return nil, fmt.Errorf("[XDS] manager, resource %s/%s not found",
+				xdsresource.ResourceTypeToName[rType], rName)
+		}
+
 		nf = &notifier{ch: make(chan struct{})}
 		m.notifierMap[rType][rName] = nf
 		// only send one request for this resource
-		m.client.Watch(rType, rName, false)
 	}
 	m.mu.Unlock()
 	// Set fetch timeout

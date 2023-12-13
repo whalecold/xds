@@ -17,12 +17,19 @@
 package xds
 
 import (
+	"sync"
+
 	"github.com/kitex-contrib/xds/core/manager"
 	"github.com/kitex-contrib/xds/xdssuite"
 )
 
+var lock = sync.Mutex{}
+
 // Init initializes the xds resource manager.
 func Init(opts ...manager.Option) error {
+	lock.Lock()
+	defer lock.Unlock()
+
 	if xdssuite.XDSInited() {
 		return nil
 	}
