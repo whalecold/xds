@@ -36,6 +36,9 @@ import (
 	"google.golang.org/genproto/googleapis/rpc/status"
 )
 
+// DefaultPort use http port default.
+const DefaultPort = "80"
+
 type (
 	ADSClient = aggregateddiscoveryservice.Client
 	ADSStream = aggregateddiscoveryservice.AggregatedDiscoveryService_StreamAggregatedResourcesClient
@@ -385,14 +388,26 @@ func (c *xdsClient) sendRequest(req *discoveryv3.DiscoveryRequest) {
 	c.reqCh <- req
 }
 
+func parseListenerName(name string) (addr string, port string, err error) {
+	tmp := strings.Split(name, ":")
+	if len(tmp) == 2 {
+		addr, port = tmp[0], tmp[1]
+	} else if len(tmp) == 1 {
+		// if not specificed the port, use default.
+		addr, port = tmp[0], DefaultPort
+	} else {
+		return "", "", fmt.Errorf("invalid listener name: %s", name)
+	}
+	return
+}
+
 // getListenerName returns the listener name in this format: ${clusterIP}_${port}
 // lookup the clusterIP using the cipResolver and return the listenerName
 func (c *xdsClient) getListenerName(rName string) (string, error) {
-	tmp := strings.Split(rName, ":")
-	if len(tmp) != 2 {
-		return "", fmt.Errorf("invalid listener name: %s", rName)
+	addr, port, err := parseListenerName(rName)
+	if err != nil {
+		return "", err
 	}
-	addr, port := tmp[0], tmp[1]
 	cip, ok := c.cipResolver.lookupHost(addr)
 	if ok && len(cip) > 0 {
 		clusterIPPort := cip[0] + "_" + port

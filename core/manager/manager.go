@@ -129,7 +129,7 @@ func (m *xdsResourceManager) Get(ctx context.Context, rType xdsresource.Resource
 	if ok {
 		return res, nil
 	}
-
+	timestamp := time.Now()
 	// Fetch resource via client and wait for the update
 	m.mu.Lock()
 	// Setup channel for this resource
@@ -163,8 +163,8 @@ func (m *xdsResourceManager) Get(ctx context.Context, rType xdsresource.Resource
 		m.mu.Lock()
 		delete(m.notifierMap[rType], rName)
 		m.mu.Unlock()
-		return nil, fmt.Errorf("[XDS] manager, fetch %s resource[%s] timeout",
-			xdsresource.ResourceTypeToName[rType], rName)
+		return nil, fmt.Errorf("[XDS] manager, fetch %s resource[%s] timeout, cost %v",
+			xdsresource.ResourceTypeToName[rType], rName, time.Since(timestamp))
 	}
 }
 
