@@ -422,6 +422,7 @@ func (c *xdsClient) handleLDS(resp *discoveryv3.DiscoveryResponse) error {
 	// returned listener name is in the format of ${clusterIP}_${port}
 	// which should be converted into to the listener name, in the form of ${fqdn}_${port}, watched by the xds client.
 	// we need to filter the response.
+	klog.Infof("handler response lds  ")
 	c.mu.RLock()
 	filteredRes := make(map[string]xdsresource.Resource)
 	klog.Infof("watch resource ... %v  %v", c.watchedResource[xdsresource.ListenerType], res)
@@ -553,6 +554,7 @@ func (c *xdsClient) handleResponse(msg interface{}) error {
 		handle different resources:
 		unmarshal resources and ack, update to cache if no error
 	*/
+	klog.Infof("handler response ... %v", rType)
 	var err error
 	switch rType {
 	case xdsresource.ListenerType:
