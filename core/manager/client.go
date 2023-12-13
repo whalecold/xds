@@ -229,6 +229,7 @@ func (c *xdsClient) sender(as ADSStream) {
 				continue
 			}
 		case req := <-c.reqCh:
+			klog.Info("send request ... url %s noce %s", req.TypeUrl, req.ResponseNonce)
 			if currStream != nil {
 				err := currStream.Send(req)
 				if err != nil {
@@ -274,6 +275,7 @@ func (c *xdsClient) receiver(as ADSStream) {
 				}
 				continue
 			}
+			klog.Infof("KITEX: [XDS] handle response type url =%s", resp.TypeUrl)
 			err = c.handleResponse(resp)
 			if err != nil {
 				klog.Errorf("KITEX: [XDS] client, handle response failed, error=%s", err)
