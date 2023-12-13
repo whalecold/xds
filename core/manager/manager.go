@@ -143,6 +143,7 @@ func (m *xdsResourceManager) Get(ctx context.Context, rType xdsresource.Resource
 		// only send one request for this resource
 		m.client.Watch(rType, rName, false)
 	}
+	now := time.Now()
 	m.mu.Unlock()
 	// Set fetch timeout
 	ctx, cancel := context.WithTimeout(ctx, m.opts.XDSSvrConfig.GetFetchXDSTimeout())
@@ -162,8 +163,8 @@ func (m *xdsResourceManager) Get(ctx context.Context, rType xdsresource.Resource
 		m.mu.Lock()
 		delete(m.notifierMap[rType], rName)
 		m.mu.Unlock()
-		return nil, fmt.Errorf("[XDS] manager, fetch %s resource[%s] timeout",
-			xdsresource.ResourceTypeToName[rType], rName)
+		return nil, fmt.Errorf("[XDS] manager, fetch %s resource[%s] timeout, cost %v",
+			xdsresource.ResourceTypeToName[rType], rName, time.Since(now))
 	}
 }
 
