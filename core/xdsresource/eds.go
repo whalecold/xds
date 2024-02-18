@@ -20,6 +20,7 @@ import (
 	"encoding/json"
 	"fmt"
 	"net"
+	"sort"
 	"strconv"
 
 	v3endpointpb "github.com/envoyproxy/go-control-plane/envoy/config/endpoint/v3"
@@ -67,6 +68,10 @@ func (e *Endpoint) Tag(key string) (value string, exist bool) {
 type Locality struct {
 	Endpoints []*Endpoint
 	// TODO: do not support locality priority yet
+	Priority uint32
+	Region   string
+	Zone     string
+	SubZone  string
 }
 
 type EndpointsResource struct {
@@ -93,8 +98,16 @@ func parseClusterLoadAssignment(cla *v3endpointpb.ClusterLoadAssignment) (*Endpo
 		}
 		localities[idx1] = &Locality{
 			Endpoints: eps,
+			Priority:  leps.GetPriority(),
+			Region:    leps.GetLocality().GetRegion(),
+			Zone:      leps.GetLocality().GetZone(),
+			SubZone:   leps.GetLocality().GetSubZone(),
 		}
 	}
+	// TODO should merge the endpoints by priority?
+	sort.Slice(localities, func(i, j int) bool {
+		return localities[i].Priority < localities[j].Priority
+	})
 	return &EndpointsResource{
 		Localities: localities,
 	}, nil

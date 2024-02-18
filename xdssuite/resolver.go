@@ -91,7 +91,22 @@ func (r *XDSResolver) getEndpoints(ctx context.Context, desc string) ([]*xdsreso
 	if endpoints == nil || len(endpoints.Localities) == 0 {
 		return nil, fmt.Errorf("no endpoints for cluster: %s", desc)
 	}
-	// TODO: filter localities
+	// the priority is sorted when the resource is create, so the index
+	// indicates the priority.
+	if len(endpoints.Localities) == 1 ||
+		len(endpoints.Localities) >= 2 && endpoints.Localities[0].Priority != endpoints.Localities[1].Priority {
+		return endpoints.Localities[0].Endpoints, nil
+	}
+	out := make([]*xdsresource.Endpoint, len(endpoints.Localities[0].Endpoints))
+	priority := endpoints.Localities[0].Priority
+	copy(out, endpoints.Localities[0].Endpoints)
+
+	for i := 1; i < len(endpoints.Localities); i++ {
+		if endpoints.Localities[i].Priority != priority {
+			break
+		}
+		out = append(out, endpoints.Localities[i].Endpoints...)
+	}
 	return endpoints.Localities[0].Endpoints, nil
 }
 
